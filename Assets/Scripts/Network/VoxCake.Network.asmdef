@@ -1,0 +1,16 @@
+{
+    "name": "VoxCake.Network",
+    "rootNamespace": "VoxCake",
+    "references": [
+        "GUID:bbb55a622064f654e8f8687c71d15d20"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
