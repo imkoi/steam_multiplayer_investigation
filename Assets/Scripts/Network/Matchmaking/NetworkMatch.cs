@@ -15,11 +15,57 @@ namespace VoxCake.Network
 		public Friend Owner => _currentLobby.Owner;
 
 		private Lobby _currentLobby;
+		private NetworkSocket _currentSocket;
+
+		private readonly CancellationTokenSource _matchCancellationTokenSource;
 		
 		public NetworkMatch(Lobby currentLobby)
 		{
 			_currentLobby = currentLobby;
+			_matchCancellationTokenSource = new CancellationTokenSource();
 			SteamMatchmaking.OnChatMessage += OnChatMessageReceived;
+		}
+		
+		internal async Task ConnectAsync(CancellationToken cancellationToken)
+		{
+			var taskCompletionSource = new TaskCompletionSource<bool>();
+			using var ctr = cancellationToken.Register(() =>
+			{
+				SteamNetworkingSockets.OnConnectionStatusChanged -= OnConnectionStatusChanged;
+				taskCompletionSource.TrySetCanceled();
+			});
+
+			SteamNetworkingSockets.OnConnectionStatusChanged += OnConnectionStatusChanged;
+
+			if (_currentLobby.Owner.IsMe)
+			{
+				_currentSocket = SteamNetworkingSockets.CreateRelaySocket<NetworkSocket>();
+				HandleConnections(cancellationToken).RunSynchronously();
+			}
+			else
+			{
+				var connnection = SteamNetworkingSockets.ConnectRelay<NetworkConnectionManager>(_currentLobby.Owner.Id);
+			}
+			
+			void OnConnectionStatusChanged(Connection connection, ConnectionInfo connectionInfo)
+			{
+				if (connectionInfo.Identity.SteamId == _currentLobby.Owner.Id)
+				{
+					//SteamNetworkingSockets.OnConnectionStatusChanged -= OnConnectionStatusChanged;
+
+					connection.Accept();
+				}
+			}
+
+			await taskCompletionSource.Task;
+		}
+
+		internal async Task HandleConnections(CancellationToken cancellationToken)
+		{
+			while (!cancellationToken.IsCancellationRequested)
+			{
+				
+			}
 		}
 
 		public void SendPacket()
@@ -30,43 +76,6 @@ namespace VoxCake.Network
 		private void SendChatMessage(string message)
 		{
 			_currentLobby.SendChatString(message);
-		}
-
-		internal async Task ConnectAsync(CancellationToken cancellationToken)
-		{
-			var connectTimer = new NetworkTimer();
-			var timerCancellationSource = new CancellationTokenSource();
-			var timerCancellationToken = cancellationToken.LinkWith(timerCancellationSource.Token);
-			connectTimer.Finish += OnTimeout;
-			SteamNetworkingSockets.OnConnectionStatusChanged += OnConnectionStatusChanged;
-			
-			//connectTimer.WaitAsync(0.5f, timerCancellationToken).RunAsynchronously();
-			
-			if (_currentLobby.Owner.IsMe)
-			{
-				var socket = SteamNetworkingSockets.CreateRelaySocket<NetworkSocket>();
-			}
-			else
-			{
-				var connnection = SteamNetworkingSockets.ConnectRelay<NetworkConnectionManager>(_currentLobby.Owner.Id);
-			}
-			
-			void OnConnectionStatusChanged(Connection connection, ConnectionInfo connectionInfo)
-			{
-				
-				if (connectionInfo.Identity.SteamId == _currentLobby.Owner.Id)
-				{
-					//SteamNetworkingSockets.OnConnectionStatusChanged -= OnConnectionStatusChanged;
-
-					connection.Accept();
-				}
-			}
-			
-			void OnTimeout()
-			{
-				connectTimer.Finish -= OnTimeout;
-				timerCancellationSource.Cancel();
-			}
 		}
 
 		private void OnChatMessageReceived(Lobby lobby, Friend sender, string message)
@@ -86,6 +95,8 @@ namespace VoxCake.Network
 		public void Dispose()
 		{
 			SteamMatchmaking.OnChatMessage -= OnChatMessageReceived;
+			_matchCancellationTokenSource.Cancel();
+			_currentSocket.Close();
 		}
 	}
 }

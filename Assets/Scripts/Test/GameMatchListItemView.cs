@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using VoxCake.Extensions;
 using VoxCake.Network;
 
 namespace Test
@@ -9,6 +10,7 @@ namespace Test
 	{
 		[SerializeField] private Button _joinButton;
 		[SerializeField] private Button _dataButton;
+		[SerializeField] private Text _playerNameText;
 		[SerializeField] private Text _playerCountText;
 
 		private CancellationTokenSource _cancellationTokenSource;
@@ -31,8 +33,9 @@ namespace Test
 		{
 			_matchInfo = matchInfo;
 			_networkClient = networkClient;
-
+			
 			_playerCountText.text = $"{matchInfo.PlayersCount}/{matchInfo.MaxPlayersCount}";
+			//_playerNameText.text = $"{matchInfo.Owner.Name}";
 			
 			_joinButton.onClick.AddListener(OnJoinButtonClicked);
 			_dataButton.onClick.AddListener(OnDataButtonClicked);

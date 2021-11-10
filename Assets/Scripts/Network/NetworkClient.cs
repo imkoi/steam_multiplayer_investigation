@@ -52,8 +52,11 @@ namespace VoxCake.Network
 			if (lobbyResult.HasValue)
 			{
 				var lobby = lobbyResult.Value;
+				var match = new NetworkMatch(lobby);
 
-				return new NetworkMatch(lobby);
+				await match.ConnectAsync(cancellationToken);
+
+				return match;
 			}
 
 			throw new NetworkMatchCreateException();
