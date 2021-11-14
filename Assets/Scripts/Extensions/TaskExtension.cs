@@ -1,12 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace VoxCake.Extensions
 {
 	public static class TaskExtension
 	{
-		public static async void RunAsynchronously(this Task task)
+		public static async void RunAsynchronously(this Task task, Action<Exception> failedCallback)
 		{
-			await task;
+			try
+			{
+				await task;
+			}
+			catch (Exception exception)
+			{
+				failedCallback?.Invoke(exception);
+			}
 		}
 	}
 }

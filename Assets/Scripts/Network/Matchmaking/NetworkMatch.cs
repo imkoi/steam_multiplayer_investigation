@@ -9,6 +9,11 @@ namespace VoxCake.Network
 {
 	public class NetworkMatch : IDisposable
 	{
+		public enum Accessibility
+		{
+			
+		}
+		
 		public event Action<NetworkMatchChatMessageData> ChatMessageReceived;
 		
 		internal Lobby CurrentLobby => _currentLobby;

@@ -1,58 +1,48 @@
-﻿using System.Threading;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
-using VoxCake.Extensions;
 using VoxCake.Network;
 
 namespace Test
 {
-	public class GameMatchListItemView : MonoBehaviour
+	public class GameMatchListItemView : MonoBehaviour, IDisposable
 	{
+		public event Action<NetworkMatchInfo> JoinButtonClicked;
+		public event Action<NetworkMatchInfo> DataButtonClicked;
+		
 		[SerializeField] private Button _joinButton;
 		[SerializeField] private Button _dataButton;
 		[SerializeField] private Text _playerNameText;
 		[SerializeField] private Text _playerCountText;
 
-		private CancellationTokenSource _cancellationTokenSource;
 		private NetworkMatchInfo _matchInfo;
-		private NetworkClient _networkClient;
 
-		private void OnEnable()
-		{
-			_cancellationTokenSource = new CancellationTokenSource();
-		}
-
-		private void OnDisable()
-		{
-			_joinButton.onClick.RemoveListener(OnJoinButtonClicked);
-			_dataButton.onClick.RemoveListener(OnDataButtonClicked);
-			_cancellationTokenSource.Cancel();
-		}
-
-		public void Initialize(NetworkMatchInfo matchInfo, NetworkClient networkClient)
+		public void Initialize(NetworkMatchInfo matchInfo)
 		{
 			_matchInfo = matchInfo;
-			_networkClient = networkClient;
-			
+
 			_playerCountText.text = $"{matchInfo.PlayersCount}/{matchInfo.MaxPlayersCount}";
-			//_playerNameText.text = $"{matchInfo.Owner.Name}";
-			
+
 			_joinButton.onClick.AddListener(OnJoinButtonClicked);
 			_dataButton.onClick.AddListener(OnDataButtonClicked);
 		}
 
-		private async void OnJoinButtonClicked()
+		public void Dispose()
 		{
-			var matchProtocol = new GameProtocol();
-			var match = await _networkClient.JoinMatchAsync(_matchInfo, matchProtocol, _cancellationTokenSource.Token);
+			_joinButton.onClick.RemoveListener(OnJoinButtonClicked);
+			_dataButton.onClick.RemoveListener(OnDataButtonClicked);
+			
+			Destroy(gameObject);
 		}
 
+		private void OnJoinButtonClicked()
+		{
+			JoinButtonClicked?.Invoke(_matchInfo);
+		}
+		
 		private void OnDataButtonClicked()
 		{
-			foreach (var pair in _matchInfo.Data)
-			{
-				Debug.Log($"{pair.Key}:{pair.Value}");
-			}
+			DataButtonClicked?.Invoke(_matchInfo);
 		}
 	}
 }
