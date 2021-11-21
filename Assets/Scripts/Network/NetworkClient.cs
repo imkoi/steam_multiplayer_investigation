@@ -58,8 +58,6 @@ namespace VoxCake.Network
 
                 await match.ConnectAsync(cancellationToken);
 
-                lobby.SetPublic();
-
                 return match;
             }
 

@@ -19,6 +19,7 @@ public class GameController : MonoBehaviour
     
     [SerializeField] private SteamApplicationId _appId;
     [SerializeField] private GameMatchListView _matchList;
+    [SerializeField] private GameMatchPageView _matchPage;
     [SerializeField] private Button _createMatchButton;
     [SerializeField] private Button _refreshButton;
     
@@ -61,7 +62,7 @@ public class GameController : MonoBehaviour
         SetButtonsActive(false);
 
         var timeoutCancellationTokenSource = new CancellationTokenSource();
-        timeoutCancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(5));
+        timeoutCancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
 
         var linkedToken = cancellationToken.LinkWith(timeoutCancellationTokenSource.Token);
 
@@ -115,6 +116,8 @@ public class GameController : MonoBehaviour
             {
                 maxPlayers = 250
             }, _cancellationTokenSource.Token);
+            
+            _matchPage.SetActive(true);
         }
         catch (Exception exception)
         {
