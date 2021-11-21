@@ -47,6 +47,8 @@ namespace VoxCake.Network
 		private readonly CancellationTokenSource _matchCancellationTokenSource;
 
 		private Lobby _currentLobby;
+		
+		private NetworkConnectionManager _currentConnection;
 		private NetworkSocket _currentSocket;
 		private AccessibilityType _currentAccessibility;
 		private bool _isConnected;
@@ -74,10 +76,10 @@ namespace VoxCake.Network
 					}
 					else
 					{
-						var connnection = SteamNetworkingSockets.ConnectRelay<NetworkConnectionManager>(_currentLobby.Owner.Id);
+						_currentConnection = SteamNetworkingSockets.ConnectRelay<NetworkConnectionManager>(_currentLobby.Owner.Id);
 					}
 				}
-					
+				
 				await Task.Yield();
 			}
 		}
@@ -121,7 +123,9 @@ namespace VoxCake.Network
 			SteamMatchmaking.OnChatMessage -= OnChatMessageReceived;
 			
 			_matchCancellationTokenSource.Cancel();
-			_currentSocket.Close();
+			
+			_currentConnection?.Close();
+			_currentSocket?.Close();
 		}
 	}
 }

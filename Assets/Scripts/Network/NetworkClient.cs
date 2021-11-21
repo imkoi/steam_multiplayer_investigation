@@ -79,7 +79,6 @@ namespace VoxCake.Network
             if (joinResultCode == 1)
             {
                 var match = new NetworkMatch(targetLobby);
-                await match.ConnectAsync(cancellationToken);
 
                 return match;
             }
