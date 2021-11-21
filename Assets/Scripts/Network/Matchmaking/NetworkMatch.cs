@@ -70,11 +70,11 @@ namespace VoxCake.Network
 			{
 				if (!_isConnected)
 				{
-					if (_currentLobby.Owner.IsMe)
+					if (_currentLobby.Owner.IsMe && _currentSocket == null)
 					{
 						_currentSocket = SteamNetworkingSockets.CreateRelaySocket<NetworkSocket>();
 					}
-					else
+					else if(_currentConnection == null)
 					{
 						_currentConnection = SteamNetworkingSockets.ConnectRelay<NetworkConnectionManager>(_currentLobby.Owner.Id);
 					}

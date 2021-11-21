@@ -114,7 +114,7 @@ public class GameController : MonoBehaviour
         {
             _currentMatch = await _networkClient.CreateMatchAsync(new NetworkMatchOptions
             {
-                maxPlayers = 250
+                maxPlayers = 54
             }, _cancellationTokenSource.Token);
             
             _matchPage.SetActive(true);
