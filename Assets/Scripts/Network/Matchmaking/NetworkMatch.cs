@@ -58,25 +58,10 @@ namespace VoxCake.Network
 			
 			SteamMatchmaking.OnChatMessage += OnChatMessageReceived;
 			SteamNetworkingSockets.OnConnectionStatusChanged += OnConnectionStatusChanged;
+			
+			HandleConnection(_matchCancellationTokenSource.Token).RunAsynchronously(Debug.LogException);
 		}
 		
-		internal async Task ConnectAsync(CancellationToken cancellationToken)
-		{
-			var taskCompletionSource = new TaskCompletionSource<bool>();
-			using var ctr = cancellationToken.Register(() =>
-			{
-				SteamNetworkingSockets.OnConnectionStatusChanged -= OnConnectionStatusChanged;
-				taskCompletionSource.TrySetCanceled();
-			});
-
-			HandleConnection(_matchCancellationTokenSource.Token).RunAsynchronously(Debug.LogException);
-
-			await taskCompletionSource.Task;
-
-			_currentLobby.SetJoinable(true);
-			_currentLobby.SetPublic();
-		}
-
 		private async Task HandleConnection(CancellationToken cancellationToken)
 		{
 			while (!cancellationToken.IsCancellationRequested)

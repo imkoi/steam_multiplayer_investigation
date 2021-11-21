@@ -46,7 +46,7 @@ namespace VoxCake.Network
 
             cancellationToken = cancellationToken.LinkWith(_clientCancellationToken);
 
-            var lobbyResult = await SteamMatchmaking.CreateLobbyAsync(32);
+            var lobbyResult = await SteamMatchmaking.CreateLobbyAsync(matchOptions.maxPlayers);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -55,8 +55,6 @@ namespace VoxCake.Network
                 var lobby = lobbyResult.Value;
 
                 var match = new NetworkMatch(lobby);
-
-                await match.ConnectAsync(cancellationToken);
 
                 return match;
             }
