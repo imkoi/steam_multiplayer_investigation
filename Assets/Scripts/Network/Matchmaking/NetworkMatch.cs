@@ -43,15 +43,12 @@ namespace VoxCake.Network
 				_currentAccessibility = value;
 			}
 		}
-		
+
+		private readonly NetworkMatchSocket _matchSocket;
 		private readonly CancellationTokenSource _matchCancellationTokenSource;
 
 		private Lobby _currentLobby;
-		
-		private NetworkConnectionManager _currentConnection;
-		private NetworkSocket _currentSocket;
 		private AccessibilityType _currentAccessibility;
-		private bool _isConnected;
 
 		public NetworkMatch(Lobby currentLobby)
 		{
@@ -59,31 +56,11 @@ namespace VoxCake.Network
 			_matchCancellationTokenSource = new CancellationTokenSource();
 			
 			SteamMatchmaking.OnChatMessage += OnChatMessageReceived;
-			SteamNetworkingSockets.OnConnectionStatusChanged += OnConnectionStatusChanged;
-			
-			HandleConnection(_matchCancellationTokenSource.Token).RunAsynchronously(Debug.LogException);
+
+			_matchSocket = new NetworkMatchSocket(currentLobby);
+			_matchSocket.ConnectionAsync(_matchCancellationTokenSource.Token).RunAsynchronously(Debug.LogException);
 		}
 		
-		private async Task HandleConnection(CancellationToken cancellationToken)
-		{
-			while (!cancellationToken.IsCancellationRequested)
-			{
-				if (!_isConnected)
-				{
-					if (_currentLobby.Owner.IsMe && _currentSocket == null)
-					{
-						_currentSocket = SteamNetworkingSockets.CreateRelaySocket<NetworkSocket>();
-					}
-					else if(_currentConnection == null)
-					{
-						_currentConnection = SteamNetworkingSockets.ConnectRelay<NetworkConnectionManager>(_currentLobby.Owner.Id);
-					}
-				}
-				
-				await Task.Yield();
-			}
-		}
-
 		public void SendPacket()
 		{
 			SteamNetworking.SendP2PPacket(0, new byte[0], 0, 0, P2PSend.Unreliable);
@@ -93,7 +70,7 @@ namespace VoxCake.Network
 		{
 			_currentLobby.SendChatString(message);
 		}
-
+		
 		private void OnChatMessageReceived(Lobby lobby, Friend sender, string message)
 		{
 			if (lobby.Id == _currentLobby.Id)
@@ -107,25 +84,13 @@ namespace VoxCake.Network
 				ChatMessageReceived?.Invoke(chatDatagram);
 			}
 		}
-		
-		private void OnConnectionStatusChanged(Connection connection, ConnectionInfo connectionInfo)
-		{
-			if (connectionInfo.Identity.SteamId == _currentLobby.Owner.Id)
-			{
-				//SteamNetworkingSockets.OnConnectionStatusChanged -= OnConnectionStatusChanged;
-
-				connection.Accept();
-			}
-		}
 
 		public void Dispose()
 		{
 			SteamMatchmaking.OnChatMessage -= OnChatMessageReceived;
 			
 			_matchCancellationTokenSource.Cancel();
-			
-			_currentConnection?.Close();
-			_currentSocket?.Close();
+			_matchSocket.Dispose();
 		}
 	}
 }
